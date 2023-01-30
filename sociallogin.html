@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>socialLogin</title>
+</head>
+<body>
+    <!-- 구글 아이디로 로그인 하기 -->
+    <button id="googlelogin">구글 아이디 로그인</button>
+
+    <!-- 로그인 form -->
+    <form>
+        <p>핸드폰번호 : <input id="phonenumber"/> <button id="phonenumberbutton">핸드폰 번호 전송</button></p>
+        <p>확인 코드 : <input id="confirmcode"/><button id="confirmcodebutton">확인 코드 전송</button></p>
+    </form>
+
+    <script type="module">
+        // Import the functions you need from the SDKs you need
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-analytics.js";
+        import { getAuth, signInWithPopup, GoogleAuthProvider, RecaptchaVerifier, signInWithPhoneNumber } from "https://www.gstatic.com/firebasejs/9.16.0/firebase-auth.js"; // 인스터스 생성 추가
+        // TODO: Add SDKs for Firebase products that you want to use
+        // https://firebase.google.com/docs/web/setup#available-libraries
+      
+        // Your web app's Firebase configuration
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+        const firebaseConfig = {
+          apiKey: "AIzaSyC3JenGO6b-GWVAVWGOUCFOC8CeIgKLpZU",
+          authDomain: "easylogin-46c44.firebaseapp.com",
+          projectId: "easylogin-46c44",
+          storageBucket: "easylogin-46c44.appspot.com",
+          messagingSenderId: "965010292985",
+          appId: "1:965010292985:web:fb90124951bb2f94d76228",
+          measurementId: "G-QXPZBQSYHV"
+        };
+      
+        // Initialize Firebase 
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const provider = new GoogleAuthProvider(); // 인스터스 생성 추가
+
+        // 팝업 창으로 로그인하려면 signInWithPopup 을 호출 추가 ---
+        const auth = getAuth(); 
+        auth.languageCode = 'ko';
+    
+        // 구글 로그인
+        document.getElementById('googlelogin').addEventListener('click', () => {
+            console.log('googole login clicked ')
+            signInWithPopup(auth, provider)
+                .then((result) => {
+                    // This gives you a Google Access Token. You can use it to access the Google API.
+                    const credential = GoogleAuthProvider.credentialFromResult(result);
+                    const token = credential.accessToken;
+                    // The signed-in user info.
+                    const user = result.user;
+
+                    console.log(result)
+                    // ...
+                }).catch((error) => {
+                    // Handle Errors here.
+                    const errorCode = error.code;
+                    const errorMessage = error.message;
+                    // The email of the user's account used.
+                    const email = error.customData.email;
+                    // The AuthCredential type that was used.
+                    const credential = GoogleAuthProvider.credentialFromError(error);
+                    // ...
+                    console.log(error)
+                });
+        })
+
+        // 구글 로그인 팝업
+        signInWithPopup(auth, provider)
+        .then((result) => {
+            // This gives you a Google Access Token. You can use it to access the Google API.
+            const credential = GoogleAuthProvider.credentialFromResult(result);
+            const token = credential.accessToken;
+            // The signed-in user info.
+            const user = result.user;
+            // ...
+        }).catch((error) => {
+            // Handle Errors here.
+            const errorCode = error.code;
+            const errorMessage = error.message;
+            // The email of the user's account used.
+            const email = error.customData.email;
+            // The AuthCredential type that was used.
+            const credential = GoogleAuthProvider.credentialFromError(error);
+            // ...
+        });
+
+        // 보이지 않는 reCAPTCHA 사용
+        window.recaptchaVerifier = new RecaptchaVerifier('phonenumberbutton', {
+            'size': 'invisible',
+            'callback': (response) => {
+              // reCAPTCHA solved, allow signInWithPhoneNumber.
+              onSignInSubmit();
+            }
+          }, auth);
+        
+        // 사용자 전화로 인증 코드 전송
+        document.getElementById('phonenumberbutton').addEventListener('click',(event) => {
+            event.preventDefault();
+            const phoneNumber = document.getElementById('phonenumber').value;
+            const appVerifier = window.recaptchaVerifier;;
+            signInWithPhoneNumber(auth, '+82'+phoneNumber, appVerifier)
+                .then((confirmationResult) => {
+                  // SMS sent. Prompt user to type the code from the message, then sign the
+                  // user in with confirmationResult.confirm(code).
+                  window.confirmationResult = confirmationResult;
+                  console.log(confirmationResult);
+                  // ...
+                }).catch((error) => {
+                    console.log(error);
+                  // Error; SMS not sent
+                  // ...
+                });
+        })
+
+        // 전화번호 인증코드로 로그인 처리하기
+        document.getElementById('confirmcodebutton').addEventListener('click',(event) => {
+            event.preventDefault();
+            // 인증 코드로 사용자 로그인 처리
+            const code = document.getElementById('confirmcode').value;
+            confirmationResult.confirm(code).then((result) => {
+            // User signed in successfully.
+            const user = result.user;
+            console.log(result);
+            alert("인증 성공")
+            // ...
+            }).catch((error) => {
+                console.log(error);
+                alert("인증 실패")
+            // User couldn't sign in (bad verification code?)
+            // ...
+            });
+        })
+      </script>
+</body>
+</html>
